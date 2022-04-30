@@ -89,6 +89,7 @@ def add():
     task = {
         "title": request.form.get("title"),
         "description": request.form.get("description"),
+        "completed": False,
         "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         "type": itemType,
         "reminders": [
@@ -142,10 +143,16 @@ def edit(id):
                     itemType = "education"
                     customText = f"Remember to study for your {matches[0]}!"
                 break
+
+    if request.form.get("completed"):
+        completed = True
+    else:
+        completed = False
     
     task = {
         "title": request.form.get("title"),
         "description": request.form.get("description"),
+        "completed": completed,
         "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         "type": itemType,
         "reminders": [
@@ -153,7 +160,7 @@ def edit(id):
     }
 
     for k, v in request.form.items():
-        if k != "title" and k != "description":
+        if k != "title" and k != "description" and k != "completed":
             task["reminders"].append({
                 "time": v,
                 "customText": customText

@@ -2,6 +2,7 @@
     "userId": [
         {
             "title": "String",
+            "completed": "Boolean",
             "description": "String",
             "createdAt": "String",
             "type": "String",

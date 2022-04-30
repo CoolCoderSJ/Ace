@@ -1,0 +1,16 @@
+{
+    "userID: String": [
+        {
+            "name": "String",
+            "description": "String",
+            "created": "String",
+            "cards": [
+                {
+                    "term": "String",
+                    "definition": "String",
+                    "starred": "Boolean"
+                }
+            ]
+        }
+    ]
+}

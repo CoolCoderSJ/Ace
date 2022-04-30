@@ -3,15 +3,12 @@
         {
             "title": "String",
             "completed": "Boolean",
-            "description": "String",
-            "createdAt": "String",
+            "timedue": "String",
             "type": "String",
-            "reminders": [
-                {
-                    "time": "String (ex: -00:01:00:00, 1 hour before)",
-                    "customText": "String"
-                }
-            ]
+            "reminder": {
+                "time": "String (ex: -00:01:00:00, 1 hour before)",
+                "customText": "String"
+            }
         }
     ]
 }

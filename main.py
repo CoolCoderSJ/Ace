@@ -50,10 +50,79 @@ def index():
 
     return render_template("index.html", tasks=tasks)
 
-@app.route("/add", methods=["POST"])
+@app.route("/add", methods=["GET", "POST"])
 def add():
     if not "user" in session.keys():
         return redirect("/signup")
+
+    if request.method == "GET":
+        return render_template("add.html")
+        
+    else:
+        ref = db.reference(session['user'])
+        tasks = ref.get()
+        
+        title = request.form.get("title")
+        sports = ['badminton', 'basketball', 'cricket', 'football', 'rugby', 'tennis', 'volleyball', 'bowling', 'baseball', 'golf', 'hockey', 'soccer', 'swimming', 'table tennis', 'weightlifting', 'boxing', 'gymnastics', 'karate', 'martial arts', 'taekwondo', 'wrestling', 'yoga', 'sport']
+        instruments = ['piano', 'saxophone', 'clarinet', 'violin', 'flute', 'trumpet', 'baritone', 'french horn', 'trombone', 'drum', 'mallet', 'xylophone', 'viola', 'cello', 'orchestra', 'band', 'chorus', 'music']
+        education = ['test', 'quiz', 'hw', 'homework', 'assignment', 'class']
+
+        sets = [sports, instruments, education]
+
+        titleWords = title.split(" ")
+        customText = ""
+        itemType = ""
+
+        while 1:
+            for item in sets:
+                matches = list(set(item).intersection(titleWords)) 
+                if matches:
+                    if item == sports:
+                        itemType = "sports"
+                        if matches[0] != "sport":
+                            customText = f"Remember to practice {matches[0]}!"
+                    if item == instruments:
+                        itemType = "instruments" 
+                        if matches[0] != "music" and matches[0] != "orchestra" and matches[0] != "band" and matches[0] != "chorus":
+                            customText = f"Remember play your {matches[0]}!"
+                    if item == education:
+                        itemType = "education"
+                        customText = f"Remember to study for your {matches[0]}!"
+                    break
+        
+        task = {
+            "title": request.form.get("title"),
+            "completed": False,
+            "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "type": itemType,
+            "reminders": [
+            ]
+        }
+
+        for k, v in request.form.items():
+            if k != "title":
+                task["reminders"].append({
+                    "time": v,
+                    "customText": customText
+                })
+
+        tasks.append(task)
+        ref.set(tasks)
+
+        return redirect('/')
+
+@app.route("/edit/<id>", methods=["GET", "POST"])
+def edit(id):
+    id = int(id)
+
+    if not "user" in session.keys():
+        return redirect("/signup")
+
+    if request.method == "GET":
+        ref = db.reference(session['user'])
+        tasks = ref.get()
+        task = tasks[id]
+        return render_template("edit.html", task=task)
 
     ref = db.reference(session['user'])
     tasks = ref.get()
@@ -85,10 +154,10 @@ def add():
                     itemType = "education"
                     customText = f"Remember to study for your {matches[0]}!"
                 break
+
     
     task = {
         "title": request.form.get("title"),
-        "description": request.form.get("description"),
         "completed": False,
         "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         "type": itemType,
@@ -97,70 +166,7 @@ def add():
     }
 
     for k, v in request.form.items():
-        if k != "title" and k != "description":
-            task["reminders"].append({
-                "time": v,
-                "customText": customText
-            })
-
-    tasks.append(task)
-    ref.set(tasks)
-
-    return redirect('/')
-
-@app.route("/edit/<id>", methods=["POST"])
-def edit(id):
-    if not "user" in session.keys():
-        return redirect("/signup")
-
-    ref = db.reference(session['user'])
-    tasks = ref.get()
-    
-    title = request.form.get("title")
-    sports = ['badminton', 'basketball', 'cricket', 'football', 'rugby', 'tennis', 'volleyball', 'bowling', 'baseball', 'golf', 'hockey', 'soccer', 'swimming', 'table tennis', 'weightlifting', 'boxing', 'gymnastics', 'karate', 'martial arts', 'taekwondo', 'wrestling', 'yoga', 'sport']
-    instruments = ['piano', 'saxophone', 'clarinet', 'violin', 'flute', 'trumpet', 'baritone', 'french horn', 'trombone', 'drum', 'mallet', 'xylophone', 'viola', 'cello', 'orchestra', 'band', 'chorus', 'music']
-    education = ['test', 'quiz', 'hw', 'homework', 'assignment', 'class']
-
-    sets = [sports, instruments, education]
-
-    titleWords = title.split(" ")
-    customText = ""
-    itemType = ""
-
-    while 1:
-        for item in sets:
-            matches = list(set(item).intersection(titleWords)) 
-            if matches:
-                if item == sports:
-                    itemType = "sports"
-                    if matches[0] != "sport":
-                        customText = f"Remember to practice {matches[0]}!"
-                if item == instruments:
-                    itemType = "instruments" 
-                    if matches[0] != "music" and matches[0] != "orchestra" and matches[0] != "band" and matches[0] != "chorus":
-                        customText = f"Remember play your {matches[0]}!"
-                if item == education:
-                    itemType = "education"
-                    customText = f"Remember to study for your {matches[0]}!"
-                break
-
-    if request.form.get("completed"):
-        completed = True
-    else:
-        completed = False
-    
-    task = {
-        "title": request.form.get("title"),
-        "description": request.form.get("description"),
-        "completed": completed,
-        "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-        "type": itemType,
-        "reminders": [
-        ]
-    }
-
-    for k, v in request.form.items():
-        if k != "title" and k != "description" and k != "completed":
+        if k != "title" and k != "completed":
             task["reminders"].append({
                 "time": v,
                 "customText": customText
@@ -173,6 +179,7 @@ def edit(id):
 
 @app.route("/delete/<id>", methods=["DELETE"])
 def delete(id):
+    id = int(id)
     if not "user" in session.keys():
         return redirect("/signup")
 
@@ -192,10 +199,9 @@ def signup():
         try:
             form = request.form
             email = form["email"]
-            username = form["username"]
             password = form["password"]
 
-            user = auth.create_user(email=email, password=password, display_name=username)
+            user = auth.create_user(email=email, password=password)
             userId = user.uid
             
             session['user'] = userId

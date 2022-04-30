@@ -5,10 +5,11 @@
             "completed": "Boolean",
             "timedue": "String",
             "type": "String",
-            "reminder": {
+            "reminders": 
+            [{
                 "time": "String (ex: -00:01:00:00, 1 hour before)",
                 "customText": "String"
-            }
+            }]
         }
     ]
 }

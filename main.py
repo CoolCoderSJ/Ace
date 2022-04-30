@@ -124,6 +124,17 @@ def edit(deckId):
         return redirect(f"/deck/{deckId}")
 
 
+@app.route("/delete/<deckId>", methods=['DELETE'])
+def delete(deckId):
+    if not "user" in session.keys():
+        return redirect("/signup")
+    ref = db.reference(session['user'])
+    decks = ref.get()
+    del decks[deckId]
+    ref.set(decks)
+
+    return redirect(f"/")
+
 @app.route("/signup")
 def signup():
     if request.method == "GET":

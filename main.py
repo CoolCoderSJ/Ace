@@ -46,94 +46,10 @@ def index():
         return redirect("/signup")
 
     ref = db.reference(session['user'])
-    decks = ref.get()
+    placeholder = ref.get()
 
-    return render_template("index.html", decks=decks)
+    return render_template("index.html", placeholder=placeholder)
 
-@app.route("/add", methods=['GET', 'POST'])
-def add():
-    if not "user" in session.keys():
-        return redirect("/signup")
-
-    if request.method == "GET":
-        return render_template("add.html")
-    
-    else:
-        ref = db.reference(session['user'])
-        decks = ref.get()
-
-        form = request.form
-
-        deck = {
-            "name": form['name'],
-            "description": form['description'],
-            "created": form['created'],
-            "cards": []
-        }
-
-        for k, v in form.items():
-            if k != "name" and k != "description" and k != "created":
-                deck['cards'].append({
-                    "term": k,
-                    "description": v,
-                    "starred": False
-                })
-
-        decks.append(deck)
-        ref.set(decks)
-
-        return redirect(f"/deck/{len(decks)}")
-
-
-@app.route("/edit/<deckId>", methods=['GET', 'POST'])
-def edit(deckId):
-    if not "user" in session.keys():
-        return redirect("/signup")
-
-    if request.method == "GET":
-        ref = db.reference(session['user'])
-        decks = ref.get()
-        deck = decks[deckId]
-
-        return render_template("edit.html", deck=deck)
-    
-    else:
-        ref = db.reference(session['user'])
-        decks = ref.get()
-
-        form = request.form
-
-        deck = {
-            "name": form['name'],
-            "description": form['description'],
-            "created": form['created'],
-            "cards": []
-        }
-
-        for k, v in form.items():
-            if k != "name" and k != "description" and k != "created":
-                deck['cards'].append({
-                    "term": k,
-                    "description": v,
-                    "starred": False
-                })
-
-        decks[deckId] = deck
-        ref.set(decks)
-
-        return redirect(f"/deck/{deckId}")
-
-
-@app.route("/delete/<deckId>", methods=['DELETE'])
-def delete(deckId):
-    if not "user" in session.keys():
-        return redirect("/signup")
-    ref = db.reference(session['user'])
-    decks = ref.get()
-    del decks[deckId]
-    ref.set(decks)
-
-    return redirect(f"/")
 
 @app.route("/signup")
 def signup():

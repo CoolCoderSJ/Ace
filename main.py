@@ -1,4 +1,4 @@
-import os
+import os, datetime
 from flask import *
 from flask_session import Session
 import requests
@@ -46,10 +46,135 @@ def index():
         return redirect("/signup")
 
     ref = db.reference(session['user'])
-    placeholder = ref.get()
+    tasks = ref.get()
 
-    return render_template("index.html", placeholder=placeholder)
+    return render_template("index.html", tasks=tasks)
 
+@app.route("/add", methods=["POST"])
+def add():
+    if not "user" in session.keys():
+        return redirect("/signup")
+
+    ref = db.reference(session['user'])
+    tasks = ref.get()
+    
+    title = request.form.get("title")
+    sports = ['badminton', 'basketball', 'cricket', 'football', 'rugby', 'tennis', 'volleyball', 'bowling', 'baseball', 'golf', 'hockey', 'soccer', 'swimming', 'table tennis', 'weightlifting', 'boxing', 'gymnastics', 'karate', 'martial arts', 'taekwondo', 'wrestling', 'yoga', 'sport']
+    instruments = ['piano', 'saxophone', 'clarinet', 'violin', 'flute', 'trumpet', 'baritone', 'french horn', 'trombone', 'drum', 'mallet', 'xylophone', 'viola', 'cello', 'orchestra', 'band', 'chorus', 'music']
+    education = ['test', 'quiz', 'hw', 'homework', 'assignment', 'class']
+
+    sets = [sports, instruments, education]
+
+    titleWords = title.split(" ")
+    customText = ""
+    itemType = ""
+
+    while 1:
+        for item in sets:
+            matches = list(set(item).intersection(titleWords)) 
+            if matches:
+                if item == sports:
+                    itemType = "sports"
+                    if matches[0] != "sport":
+                        customText = f"Remember to practice {matches[0]}!"
+                if item == instruments:
+                    itemType = "instruments" 
+                    if matches[0] != "music" and matches[0] != "orchestra" and matches[0] != "band" and matches[0] != "chorus":
+                        customText = f"Remember play your {matches[0]}!"
+                if item == education:
+                    itemType = "education"
+                    customText = f"Remember to study for your {matches[0]}!"
+                break
+    
+    task = {
+        "title": request.form.get("title"),
+        "description": request.form.get("description"),
+        "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+        "type": itemType,
+        "reminders": [
+        ]
+    }
+
+    for k, v in request.form.items():
+        if k != "title" and k != "description":
+            task["reminders"].append({
+                "time": v,
+                "customText": customText
+            })
+
+    tasks.append(task)
+    ref.set(tasks)
+
+    return redirect('/')
+
+@app.route("/edit/<id>", methods=["POST"])
+def edit(id):
+    if not "user" in session.keys():
+        return redirect("/signup")
+
+    ref = db.reference(session['user'])
+    tasks = ref.get()
+    
+    title = request.form.get("title")
+    sports = ['badminton', 'basketball', 'cricket', 'football', 'rugby', 'tennis', 'volleyball', 'bowling', 'baseball', 'golf', 'hockey', 'soccer', 'swimming', 'table tennis', 'weightlifting', 'boxing', 'gymnastics', 'karate', 'martial arts', 'taekwondo', 'wrestling', 'yoga', 'sport']
+    instruments = ['piano', 'saxophone', 'clarinet', 'violin', 'flute', 'trumpet', 'baritone', 'french horn', 'trombone', 'drum', 'mallet', 'xylophone', 'viola', 'cello', 'orchestra', 'band', 'chorus', 'music']
+    education = ['test', 'quiz', 'hw', 'homework', 'assignment', 'class']
+
+    sets = [sports, instruments, education]
+
+    titleWords = title.split(" ")
+    customText = ""
+    itemType = ""
+
+    while 1:
+        for item in sets:
+            matches = list(set(item).intersection(titleWords)) 
+            if matches:
+                if item == sports:
+                    itemType = "sports"
+                    if matches[0] != "sport":
+                        customText = f"Remember to practice {matches[0]}!"
+                if item == instruments:
+                    itemType = "instruments" 
+                    if matches[0] != "music" and matches[0] != "orchestra" and matches[0] != "band" and matches[0] != "chorus":
+                        customText = f"Remember play your {matches[0]}!"
+                if item == education:
+                    itemType = "education"
+                    customText = f"Remember to study for your {matches[0]}!"
+                break
+    
+    task = {
+        "title": request.form.get("title"),
+        "description": request.form.get("description"),
+        "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+        "type": itemType,
+        "reminders": [
+        ]
+    }
+
+    for k, v in request.form.items():
+        if k != "title" and k != "description":
+            task["reminders"].append({
+                "time": v,
+                "customText": customText
+            })
+
+    tasks[id] = task
+    ref.set(tasks)
+
+    return redirect('/')
+
+@app.route("/delete/<id>", methods=["DELETE"])
+def delete(id):
+    if not "user" in session.keys():
+        return redirect("/signup")
+
+    ref = db.reference(session['user'])
+    tasks = ref.get()
+    del tasks[id]
+    ref.set(tasks)
+
+    return redirect('/')
 
 @app.route("/signup")
 def signup():

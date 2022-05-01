@@ -1,4 +1,4 @@
-import os, datetime, json, time, atexit
+import os, datetime, json, time, atexit, pytz
 from flask import *
 from flask_session import Session
 import requests
@@ -52,31 +52,47 @@ def check_time():
 
     ref = db.reference("/push")
     push_data = ref.get()
+
+
+    ref = db.reference('/')
     
-    now_est = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-5)))
+    now_est = datetime.datetime.now()
+    now_est -= datetime.timedelta(hours=5)
 
     for user in users:
+        print(user)
         if user == "push": continue
         for task in users[user]:
-            timedue = datetime.datetime.strptime(task['timedue'], "%Y-%m-%d") 
+            print(task['title'])
+            timedue = datetime.datetime.strptime(task['timedue'], "%Y-%m-%d")
+            print(now_est, timedue)
             delta = timedue - now_est
             i = 0
+
+            daysBetween = (delta.days*-1) -1
             for reminder in task['reminders']:
-                if f"-0{delta.days}:00:00:00" == reminder['time']:
-                    for push in push_data[user]:          
+                print(f"-0{daysBetween}:00:00:00", reminder['time'])
+                if f"-0{daysBetween}:00:00:00" == reminder['time']:
+                    for push in push_data[user]: 
+                        print(push)
                         if reminder['customText'] != "":
                             text = reminder['customText']
                         else:
                             text = task['description']
 
-                        webpush(
-                            subscription_info=push,
-                            data=f"{task['title']} || {delta.days} left! {text}",
-                            vapid_private_key=os.environ['VAPID'],
-                            vapid_claims={
-                                "sub": "mailto:email@example.com"
-                            }
-                        )
+                        print(f"{task['title']} || {daysBetween} day(s) left! {text}")
+
+                        try:
+                            webpush(
+                                subscription_info=push,
+                                data=f"{task['title']} || {daysBetween} day(s) left! {text}",
+                                vapid_private_key=os.environ['VAPID'],
+                                vapid_claims={
+                                    "sub": "mailto:email@example.com"
+                                }
+                            )
+                        except Exception as e:
+                            print("ERROR-", e)
                     
                     del task['reminders'][i]
                 i += 1
@@ -85,7 +101,7 @@ def check_time():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=check_time, trigger="interval", seconds=60)
+scheduler.add_job(func=check_time, trigger="interval", seconds=5)
 scheduler.start()
 
 @socketio.on('subscribed')
@@ -100,8 +116,9 @@ def handle_newsub(subscription, user):
             userObj = push[user]
         except:
             userObj = []
-    
-        userObj.append(subscription)
+
+        if subscription not in userObj:
+            userObj.append(subscription)
 
         push[user] = userObj
         ref.set(push)
@@ -435,6 +452,10 @@ def edit(id):
                     "time": "-01:00:00:00",
                     "customText": f"Good luck with your {matchfor7[0]}!"
                 })
+                reminders.append({
+                    "time": "-00:00:00:00",
+                    "customText": f"Good luck with your {matchfor7[0]}!"
+                })
             elif matchfor7[0] == "concert":
                 reminders.append({
                     "time": "-07:00:00:00",
@@ -462,6 +483,10 @@ def edit(id):
                 })
                 reminders.append({
                     "time": "-01:00:00:00",
+                    "customText": f"Good luck with your {matchfor7[0]}!"
+                })
+                reminders.append({
+                    "time": "-00:00:00:00",
                     "customText": f"Good luck with your {matchfor7[0]}!"
                 })
             else:
@@ -493,6 +518,10 @@ def edit(id):
                     "time": "-01:00:00:00",
                     "customText": f"Good luck with your {matchfor7[0]} submission!"
                 })
+                reminders.append({
+                    "time": "-00:00:00:00",
+                    "customText": f"Good luck with your {matchfor7[0]}!"
+                })
 
         matchfor3 = list(set(days_3).intersection(titleWords)) 
         if matchfor3:
@@ -509,6 +538,10 @@ def edit(id):
                 "time": "-01:00:00:00",
                 "customText": f"Good luck with your {matchfor3[0]}!"
             })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your {matchfor3[0]}!"
+            })
 
         matchfor2 = list(set(days_2).intersection(titleWords)) 
         if matchfor2:
@@ -521,6 +554,10 @@ def edit(id):
                 "time": "-01:00:00:00",
                 "customText": f"Make sure to practice your {matchfor2[0]}!"
             })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Make sure to practice your {matchfor2[0]}!"
+            })
         
         if reminders == []:
             itemType = ""
@@ -530,6 +567,10 @@ def edit(id):
             })
             reminders.append({
                 "time": "-01:00:00:00",
+                "customText": ""
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
                 "customText": ""
             })
             

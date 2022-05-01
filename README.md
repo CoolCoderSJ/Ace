@@ -2,6 +2,7 @@
 
 Many task keeper and reminder apps already exist, but are usually complicated, or filled with too many features to use. Ace is a minimalistic task manager and reminder app that is easy to use and has a clean and simple interface. With Ace, you can create a task and set a task type, and Ace will take care of the rest. If you enable notifications for your tasks, Ace will send you a notification to your devices every day for a few days based on your task to keep you on track.
 
+Ace is meant for students because it helps them to keep track of their assignments and tests. It helps students remember when their tests, sporting events, concerts, or anything else is happening.
 
 ## Getting Started
 - You can visit an instance of Ace currently running [here](https://ace.coolcodersj.repl.co/), or by going to https://ace.coolcodersj.repl.co/.
@@ -89,6 +90,6 @@ ___
     - Windows Command Prompt: `python main.py`
     - macOS Terminal: `python3 main.py`
 
-- Navigate to https://localhost:5000/
+- Navigate to https://localhost:8080/
 
 ___

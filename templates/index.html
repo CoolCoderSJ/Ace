@@ -9,18 +9,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
     <link rel="stylesheet" href="static/css/Login-Form-Basic.css">
     <link rel="stylesheet" href="static/css/styles.css">
-    <link
-    href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.0.0/mdb.min.css"
-    rel="stylesheet"
-    />
-    
-    <script
-    type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.0.0/mdb.min.js"
-    ></script>
-    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.0.0/mdb.min.css" rel="stylesheet" />
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.0.0/mdb.min.js"></script>
+
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
 </head>
 
 <body>
@@ -34,19 +28,28 @@
             </div>
             <div class="row d-flex justify-content-center">
                 <div class="col-md-6 col-xl-4" style="flex-grow: 1">
-                    <div class="d-flex justify-content-lg-center" style="margin-bottom: 25px;"><a href="/add"><button class="btn btn-primary d-lg-flex" type="button">Add something new...</button></a></div>
+                    <div class="d-flex justify-content-lg-center" style="margin-bottom: 25px;"><a href="/add"><button
+                                class="btn btn-primary d-lg-flex" type="button">Add something new...</button></a></div>
 
-                    <div class="d-flex justify-content-lg-center" style="margin-bottom: 25px;"><h3>In-Progress Tasks</h3></div>
+                    <div class="d-flex justify-content-lg-center" style="margin-bottom: 25px;">
+                        <h3>In-Progress Tasks</h3>
+                    </div>
 
                     {% for task in tasks %}
-                    {% if task.complete == False %}
+                    {% if task['completed'] == False %}
                     <div class="card mb-5">
                         <div class="card-body flex-column align-items-center">
                             <div class="row">
                                 <div class="col">
                                     <div class="row">
                                         <div class="col">
-                                            <h4 class="text-capitalize d-lg-flex align-items-lg-center"><form id="complete{{task['id']}}" method="post" action="/complete/{{ task['id'] }}"><i class="icon ion-ios-checkmark-outline text-primary d-lg-flex align-items-lg-center" onclick="document.getElementById('complete{{task['id']}}')"></i></form>&nbsp;{{ task['title'] }}</h4>
+                                            <h4 class="text-capitalize d-lg-flex align-items-lg-center">
+                                                <form id="complete{{task['id']}}" method="post"
+                                                    action="/complete/{{ task['id'] }}"><i
+                                                        class="icon ion-ios-checkmark-outline text-primary d-lg-flex align-items-lg-center"
+                                                        onclick="document.getElementById('complete{{task['id']}}').submit()"></i>
+                                                </form>&nbsp;{{ task['title'] }}
+                                            </h4>
                                             <p>{{ task['description'] }}</p>
                                         </div>
                                     </div>
@@ -57,10 +60,16 @@
                                 <div class="col">
                                     <div class="row">
                                         <div class="col" style="display: flex; gap: 10px; justify-content: flex-end;">
-                                            <i class="icon ion-information fs-5 text-primary" onclick="Swal.fire({title: 'Reminder Period', text: '{{ task['message'] }}'})"></i>
-                                            <a href="/edit/{{ task['id'] }}"><i class="icon ion-edit fs-5 text-secondary"></i></a>
-                                            <form class="shortenForm" id="deleteForm" method="post" action="/delete/{{ task['id'] }}"><i class="icon ion-trash-b fs-5 text-danger" onclick="document.getElementById('deleteForm').submit()"></i></form>
-                         </div>
+                                            <i class="icon ion-information fs-5 text-primary"
+                                                onclick="Swal.fire({title: 'Reminder Period', text: '{{ task['message'] }}'})"></i>
+                                            <a href="/edit/{{ task['id'] }}"><i
+                                                    class="icon ion-edit fs-5 text-secondary"></i></a>
+                                            <form class="shortenForm" id="deleteForm" method="post"
+                                                action="/delete/{{ task['id'] }}"><i
+                                                    class="icon ion-trash-b fs-5 text-danger"
+                                                    onclick="document.getElementById('deleteForm').submit()"></i></form>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -68,17 +77,26 @@
                     {% endif %}
                     {% endfor %}
 
-                    <div class="d-flex justify-content-lg-center" style="margin-top: 25px; margin-bottom: 25px;"><h3>Completed Tasks</h3></div>
+                    <div class="d-flex justify-content-lg-center" style="margin-top: 25px; margin-bottom: 25px;">
+                        <h3>Completed Tasks</h3>
+                    </div>
 
                     {% for task in tasks %}
-                    {% if task.complete == True %}
+                    {% if task['completed'] == True %}
                     <div class="card mb-5">
                         <div class="card-body flex-column align-items-center">
                             <div class="row">
                                 <div class="col">
                                     <div class="row">
                                         <div class="col">
-                                            <h4 class="text-capitalize d-lg-flex align-items-lg-center" style="text-decoration: line-through;"><form id="uncomplete{{task['id']}}" method="post" action="/uncomplete/{{ task['id'] }}"><i class="icon ion-ios-checkmark text-primary d-lg-flex align-items-lg-center" onclick="document.getElementById('uncomplete{{task['id']}}')"></i></form>&nbsp;{{ task['title'] }}</h4>
+                                            <h4 class="text-capitalize d-lg-flex align-items-lg-center"
+                                                style="text-decoration: line-through;">
+                                                <form id="uncomplete{{task['id']}}" method="post"
+                                                    action="/uncomplete/{{ task['id'] }}"><i
+                                                        class="icon ion-ios-checkmark text-primary d-lg-flex align-items-lg-center"
+                                                        onclick="document.getElementById('uncomplete{{task['id']}}').submit()"></i>
+                                                </form>&nbsp;{{ task['title'] }}
+                                            </h4>
                                             <p>{{ task['description'] }}</p>
                                         </div>
                                     </div>
@@ -89,19 +107,21 @@
                                 <div class="col">
                                     <div class="row">
                                         <div class="col" style="display: flex; gap: 10px; justify-content: flex-end;">
-                                            <a href="/edit/{{ task['id'] }}"><i class="icon ion-edit fs-5 text-secondary"></i></a>
-                                            <form class="shortenForm" id="deleteForm" method="post" action="/delete/{{ task['id'] }}"><i class="icon ion-trash-b fs-5 text-danger" onclick="document.getElementById('deleteForm').submit()"></i></form>
-                         </div>
+                                            <a href="/edit/{{ task['id'] }}"><i
+                                                    class="icon ion-edit fs-5 text-secondary"></i></a>
+                                            <form class="shortenForm" id="deleteForm" method="post"
+                                                action="/delete/{{ task['id'] }}"><i
+                                                    class="icon ion-trash-b fs-5 text-danger"
+                                                    onclick="document.getElementById('deleteForm').submit()"></i></form>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     {% endif %}
                     {% endfor %}
-
                 </div>
-            </div>
-        </div>
     </section>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

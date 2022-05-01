@@ -68,7 +68,8 @@ def index():
                 "title": task['title'],
                 "description": task['description'],
                 "time": task['timedue'],
-                "message": task['message'],
+                "completed": task['completed'],
+                "message": message,
             })
             i += 1
 
@@ -77,27 +78,23 @@ def index():
 
 @app.route("/complete/<id>", methods=['POST'])
 def complete(id):
+    id = int(id)
     ref = db.reference(session['user'])
     tasks = ref.get()
 
-    for task in tasks:
-        if task['id'] == id:
-            ref.child(task['id']).update({
-                "completed": True
-            })
+    tasks[id]['completed'] = True
+    ref.set(tasks)
 
     return redirect("/")
 
 @app.route("/uncomplete/<id>", methods=['POST'])
 def uncomplete(id):
+    id = int(id)
     ref = db.reference(session['user'])
     tasks = ref.get()
 
-    for task in tasks:
-        if task['id'] == id:
-            ref.child(task['id']).update({
-                "completed": False
-            })
+    tasks[id]['completed'] = False
+    ref.set(tasks)
 
     return redirect("/")
 

@@ -12,7 +12,7 @@ Ace is meant for students because it helps them to keep track of their assignmen
 - Click the `Add something new...` button
 - ![image](https://sjcdn.is-a.dev/file/eippdl)
 - Fill in the fields 
-- That's it! Ace will remind you when it's time
+- That's it! Ace will remind you when it's time, based on the type of task you selected
 
 
 ## Tools Used

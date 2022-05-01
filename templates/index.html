@@ -28,9 +28,12 @@
             </div>
             <div class="row d-flex justify-content-center">
                 <div class="col-md-6 col-xl-4" style="flex-grow: 1">
-                    <div class="d-flex justify-content-lg-center" style="margin-bottom: 25px;"><a href="/add"><button
-                                class="btn btn-primary d-lg-flex" type="button">Add something new...</button></a></div>
+                    <div class="d-flex justify-content-lg-center" style="margin-bottom: 25px; gap: 15px;"><a href="/add"><button
+                                class="btn btn-primary d-lg-flex" type="button">Add something new...</button></a> <a href="/preferences"><button
+                                    class="btn btn-outline-primary d-lg-flex" type="button">Notifcation Preferences</button></a></div>
 
+                    
+                    {% if tasks %}
                     <div class="d-flex justify-content-lg-center" style="margin-bottom: 25px;">
                         <h3>In-Progress Tasks</h3>
                     </div>
@@ -121,6 +124,16 @@
                     </div>
                     {% endif %}
                     {% endfor %}
+
+                    {% else %}
+
+                    <div class="d-flex justify-content-lg-center" style="margin-bottom: 25px; flex-direction: column; text-align: center;">
+                        <h3>No Tasks</h3>
+                        <p>Add a new task by clicking the button above.</p>
+                    </div>
+
+                    {% endif %}
+
                 </div>
     </section>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

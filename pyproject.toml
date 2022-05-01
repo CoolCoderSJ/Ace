@@ -7,6 +7,9 @@ authors = ["Your Name <you@example.com>"]
 [tool.poetry.dependencies]
 python = ">=3.8.0,<3.9"
 numpy = "^1.22.2"
+firebase-admin = "^5.2.0"
+Flask = "^2.1.2"
+requests = "^2.27.1"
 
 [tool.poetry.dev-dependencies]
 

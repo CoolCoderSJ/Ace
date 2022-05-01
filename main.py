@@ -1,4 +1,4 @@
-import os, datetime
+import os, datetime, json
 from flask import *
 from flask_session import Session
 import requests
@@ -7,7 +7,6 @@ import firebase_admin
 from firebase_admin import db
 from firebase_admin import credentials
 from firebase_admin import auth
-from firebase_admin.auth import UserRecord
 from firebase_admin import exceptions
 
 
@@ -20,8 +19,8 @@ app.secret_key = r's\xb6%\x99\x8d2\n\x84=Y5H\x0c\'^\xfb>\x86\xa4\xbe"\n\xf9r'
 
 cred_obj = credentials.Certificate("firebase_cred.json")
 fire = firebase_admin.initialize_app(cred_obj, {
-	'databaseURL': "https://ace-39874-default-rtdb.firebaseio.com"
-	})
+    'databaseURL': "https://ace-39874-default-rtdb.firebaseio.com"
+    })
 
 def sign_in_with_email_and_password(email: str, password: str, return_secure_token: bool = True):
     payload = json.dumps({
@@ -51,16 +50,57 @@ def index():
     htmlTasks = []
 
     i = 0
-    for task in tasks:
-        htmlTasks.append({
-            "id": i,
-            "title": task['title'],
-            "description": task['description'],
-            "time": task['timedue'],
-        })
-        i += 1
 
+    if tasks:
+        for task in tasks:
+            if task['type'] == "2" or task['type'] == "3" or task['type'] == "7":
+                keywordbased = True
+            else:
+                keywordbased = False
+        
+            if keywordbased:
+                message = f"Ace detected specific keywords that made it believe a {len(task['reminders'])} day reminder period would be best. You will be reminded each day for {len(task['reminders'])} days before the day of the task, as well as the day of the task."
+            else: 
+                message = f"Ace did not detect any specific keywords to determine a proper reminder time period. You will be reminded each day for 2 days before the day of the task, as well as the day of the task."
+                
+            htmlTasks.append({
+                "id": i,
+                "title": task['title'],
+                "description": task['description'],
+                "time": task['timedue'],
+                "message": task['message'],
+            })
+            i += 1
+
+    
     return render_template("index.html", tasks=htmlTasks)
+
+@app.route("/complete/<id>", methods=['POST'])
+def complete(id):
+    ref = db.reference(session['user'])
+    tasks = ref.get()
+
+    for task in tasks:
+        if task['id'] == id:
+            ref.child(task['id']).update({
+                "completed": True
+            })
+
+    return redirect("/")
+
+@app.route("/uncomplete/<id>", methods=['POST'])
+def uncomplete(id):
+    ref = db.reference(session['user'])
+    tasks = ref.get()
+
+    for task in tasks:
+        if task['id'] == id:
+            ref.child(task['id']).update({
+                "completed": False
+            })
+
+    return redirect("/")
+
 
 @app.route("/add", methods=["GET", "POST"])
 def add():
@@ -73,6 +113,7 @@ def add():
     else:
         ref = db.reference(session['user'])
         tasks = ref.get()
+
         
         title = request.form.get("title")
         reminders = []
@@ -117,6 +158,10 @@ def add():
                     "time": "-01:00:00:00",
                     "customText": f"Good luck with your {matchfor7[0]}!"
                 })
+                reminders.append({
+                    "time": "-00:00:00:00",
+                    "customText": f"Good luck with your {matchfor7[0]}!"
+                })
             elif matchfor7[0] == "concert":
                 reminders.append({
                     "time": "-07:00:00:00",
@@ -144,6 +189,10 @@ def add():
                 })
                 reminders.append({
                     "time": "-01:00:00:00",
+                    "customText": f"Good luck with your {matchfor7[0]}!"
+                })
+                reminders.append({
+                    "time": "-00:00:00:00",
                     "customText": f"Good luck with your {matchfor7[0]}!"
                 })
             else:
@@ -175,6 +224,10 @@ def add():
                     "time": "-01:00:00:00",
                     "customText": f"Good luck with your {matchfor7[0]} submission!"
                 })
+                reminders.append({
+                    "time": "-00:00:00:00",
+                    "customText": f"Good luck with your {matchfor7[0]}!"
+                })
 
         matchfor3 = list(set(days_3).intersection(titleWords)) 
         if matchfor3:
@@ -191,6 +244,10 @@ def add():
                 "time": "-01:00:00:00",
                 "customText": f"Good luck with your {matchfor3[0]}!"
             })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your {matchfor3[0]}!"
+            })
 
         matchfor2 = list(set(days_2).intersection(titleWords)) 
         if matchfor2:
@@ -201,6 +258,10 @@ def add():
             })
             reminders.append({
                 "time": "-01:00:00:00",
+                "customText": f"Make sure to practice your {matchfor2[0]}!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
                 "customText": f"Make sure to practice your {matchfor2[0]}!"
             })
         
@@ -214,18 +275,32 @@ def add():
                 "time": "-01:00:00:00",
                 "customText": ""
             })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": ""
+            })
             
         
         task = {
             "title": request.form.get("title"),
+            "description": request.form.get("description"),
             "completed": False,
-            "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "timedue": request.form.get("timedue"),
             "type": itemType,
             "reminders": reminders,
         }
 
-        tasks.append(task)
-        ref.set(tasks)
+        if not tasks:
+            ref = db.reference("/")
+            existing = ref.get()
+            if not existing:
+                existing = {}
+            existing[session['user']] = [task]
+            ref.set(existing)
+        
+        else:
+            tasks.append(task)
+            ref.set(tasks)
 
         return redirect('/')
 
@@ -244,7 +319,8 @@ def edit(id):
         htmlTask = {
             "title": task["title"],
             "description": task["description"],
-            "timedue": task["timedue"]
+            "timedue": task["timedue"],
+            "id": id
         }
         return render_template("edit.html", task=htmlTask)
 
@@ -396,17 +472,20 @@ def edit(id):
         
         task = {
             "title": request.form.get("title"),
+            "description": request.form.get("description"),
             "completed": False,
-            "createdAt": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "timedue": request.form.get("timedue"),
             "type": itemType,
             "reminders": reminders,
         }
+
+        tasks[id] = task
 
         ref.set(tasks)
 
     return redirect('/')
 
-@app.route("/delete/<id>", methods=["DELETE"])
+@app.route("/delete/<id>", methods=["POST"])
 def delete(id):
     id = int(id)
     if not "user" in session.keys():
@@ -419,7 +498,7 @@ def delete(id):
 
     return redirect('/')
 
-@app.route("/signup")
+@app.route("/signup", methods=['GET', 'POST'])
 def signup():
     if request.method == "GET":
         error = request.args.get("error")
@@ -432,14 +511,15 @@ def signup():
 
             user = auth.create_user(email=email, password=password)
             userId = user.uid
+
             
             session['user'] = userId
             return redirect("/")
 
         except exceptions.FirebaseError as e:
-            return redirect(f"https://hours.mathlings.org/signup?error={e}")
+            return redirect(f"https://Ace.coolcodersj.repl.co/signup?error={e}")
         
-@app.route("/login")
+@app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == "GET":
         error = request.args.get("error")
@@ -459,7 +539,7 @@ def login():
 
         else:
             e = resp["error"]['message']
-            return redirect(f"https://hours.mathlings.org/signup?error={e}")
+            return redirect(f"https://Ace.coolcodersj.repl.co/login?error={e}")
             
         
 

@@ -60,26 +60,19 @@ def check_time():
     now_est -= datetime.timedelta(hours=5)
 
     for user in users:
-        print(user)
         if user == "push": continue
         for task in users[user]:
-            print(task['title'])
             timedue = datetime.datetime.strptime(task['timedue'], "%Y-%m-%d")
-            print(now_est, timedue)
             delta = timedue - now_est
             i = 0
             daysBetween = delta.days + 1
             for reminder in task['reminders']:
-                print(f"-0{daysBetween}:00:00:00", reminder['time'])
                 if f"-0{daysBetween}:00:00:00" == reminder['time']:
                     for push in push_data[user]: 
-                        print(push)
                         if reminder['customText'] != "":
                             text = reminder['customText']
                         else:
                             text = task['description']
-
-                        print(f"{task['title']} || {daysBetween} day(s) left! {text}")
 
                         try:
                             webpush(

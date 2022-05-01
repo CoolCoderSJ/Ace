@@ -12,8 +12,14 @@ Ace is meant for students because it helps them to keep track of their assignmen
 - Click the `Add something new...` button
 - ![image](https://sjcdn.is-a.dev/file/eippdl)
 - Fill in the fields 
-- That's it! Ace will remind you when it's time, based on the type of task you selected
+- That's it! Ace will remind you when it's time, based on the type of task you selected.
+- Just a note, if you visit Ace on your phone and allow notifications, **Ace will remind you of your tasks through mobile notifications even if the browser is closed**.
 
+## Pitch
+- The inspiration for Ace came from my own experience of using task manager apps. I always end up forgetting my assignments, and end up rushing them. I've tried existing tools, but they just don't send me notifications, or were too complicated to keep using.
+- In the future, I could definitely add features to let users make their own task types and set custom reminder periods.
+- A few issues I ran into at the beginning were getting authentication and my database to work. I spent quite a lot of time on that, but eventually had it sorted out. 
+- A feature I am proud of is the browser notification, because I haven't done them a lot and had to start almost from no knowledge for it. 
 
 ## Tools Used
 - Python/Flask

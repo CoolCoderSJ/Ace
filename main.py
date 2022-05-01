@@ -52,31 +52,46 @@ def check_time():
 
     ref = db.reference("/push")
     push_data = ref.get()
+
+
+    ref = db.reference('/')
     
-    now_est = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-5)))
+    now_est = datetime.datetime.now()
+    now_est -= datetime.timedelta(hours=5)
 
     for user in users:
+        print(user)
         if user == "push": continue
         for task in users[user]:
-            timedue = datetime.datetime.strptime(task['timedue'], "%Y-%m-%d") 
+            print(task['title'])
+            timedue = datetime.datetime.strptime(task['timedue'], "%Y-%m-%d")
+            print(now_est, timedue)
             delta = timedue - now_est
             i = 0
+            daysBetween = delta.days + 1
             for reminder in task['reminders']:
-                if f"-0{delta.days}:00:00:00" == reminder['time']:
-                    for push in push_data[user]:          
+                print(f"-0{daysBetween}:00:00:00", reminder['time'])
+                if f"-0{daysBetween}:00:00:00" == reminder['time']:
+                    for push in push_data[user]: 
+                        print(push)
                         if reminder['customText'] != "":
                             text = reminder['customText']
                         else:
                             text = task['description']
 
-                        webpush(
-                            subscription_info=push,
-                            data=f"{task['title']} || {delta.days} left! {text}",
-                            vapid_private_key=os.environ['VAPID'],
-                            vapid_claims={
-                                "sub": "mailto:email@example.com"
-                            }
-                        )
+                        print(f"{task['title']} || {daysBetween} day(s) left! {text}")
+
+                        try:
+                            webpush(
+                                subscription_info=push,
+                                data=f"{task['title']} || {daysBetween} day(s) left! {text}",
+                                vapid_private_key=os.environ['VAPID'],
+                                vapid_claims={
+                                    "sub": "mailto:email@example.com"
+                                }
+                            )
+                        except Exception as e:
+                            print("ERROR-", e)
                     
                     del task['reminders'][i]
                 i += 1
@@ -85,9 +100,8 @@ def check_time():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=check_time, trigger="interval", seconds=60)
+scheduler.add_job(func=check_time, trigger="interval", seconds=5)
 scheduler.start()
-
 @socketio.on('subscribed')
 def handle_newsub(subscription, user):
     if subscription:
@@ -100,8 +114,9 @@ def handle_newsub(subscription, user):
             userObj = push[user]
         except:
             userObj = []
-    
-        userObj.append(subscription)
+
+        if subscription not in userObj:
+            userObj.append(subscription)
 
         push[user] = userObj
         ref.set(push)
@@ -126,7 +141,7 @@ def index():
                 keywordbased = False
         
             if keywordbased:
-                message = f"Ace detected specific keywords that made it believe a {len(task['reminders'])} day reminder period would be best. You will be reminded each day for {len(task['reminders'])} days before the day of the task, as well as the day of the task."
+                message = f"Ace used your task type to determine that a {len(task['reminders'])} day reminder period might be best. You will be reminded each day for {len(task['reminders'])} days before the day of the task, as well as the day of the task."
             else: 
                 message = f"Ace did not detect any specific keywords to determine a proper reminder time period. You will be reminded each day for 2 days before the day of the task, as well as the day of the task."
                 

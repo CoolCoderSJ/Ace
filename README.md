@@ -2,6 +2,7 @@
 
 Many task keeper and reminder apps already exist, but are usually complicated, or filled with too many features to use. Ace is a minimalistic task manager and reminder app that is easy to use and has a clean and simple interface. With Ace, you can create a task and set a task type, and Ace will take care of the rest. If you enable notifications for your tasks, Ace will send you a notification to your devices every day for a few days before your task to keep you on track.
 
+
 ## Getting Started
 - You can visit an instance of Ace currently running [here](https://ace.coolcodersj.repl.co/), or by going to https://ace.coolcodersj.repl.co/.
 - Start by signing up with an email and password
@@ -12,12 +13,15 @@ Many task keeper and reminder apps already exist, but are usually complicated, o
 - Fill in the fields 
 - That's it! Ace will remind you when it's time
 
+
 ## Self Hosting
 Ace uses Firebase for its authentication and database. To get started, head over to [Firebase](https://firebase.google.com/) and click `Get Started`. 
 - Click `Add Project`
 - Enter a name for your project and click `Continue`
 - Ace did not use the analytics firebase provides, so you can disable the toggle then click Create Project
 - When your project has been created, click `Continue`
+
+___
 
 - Start by going to the Authentication tab on the left
 - ![image](https://sjcdn.is-a.dev/file/pyycdq)
@@ -38,6 +42,7 @@ Ace uses Firebase for its authentication and database. To get started, head over
 - Copy the `Web API Key`
 - Set an environment variable that your app can read, and name the variable `FIREBASE_API_KEY`. Set the value of the variable to the `Web API Key` you copied.
 
+___
 
 - You also need Firebase credentials for this project.
 - In the project settings, click the `Service accounts` tab
@@ -45,6 +50,8 @@ Ace uses Firebase for its authentication and database. To get started, head over
 - Click `Generate key`
 - Firebase downloads your credentials as a file after this step
 - Rename this file to `firebase_cred.json` and move it to your project directory root
+
+___
 
 - Finally, you need to setup your push notification credentials
 - Go to the `Cloud Messaging` tab in your Firebase project settings
@@ -57,6 +64,8 @@ Ace uses Firebase for its authentication and database. To get started, head over
 - Make a new environment variable for your project
     - Name the variable `VAPID`, and set the value to the private key you just copied
 
-That should be it! You can now run your Ace instance by running the main.py file with python.
+___
+
+- That should be it! You can now run your Ace instance by running the main.py file with python.
     - Windows Command Prompt: `python main.py`
     - macOS Terminal: `python3 main.py`

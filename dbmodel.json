@@ -11,5 +11,10 @@
                 "customText": "String"
             }]
         }
-    ]
+    ],
+    "push": {
+        "userId": [
+            "JSON - Subscription Obj"
+        ]
+    }
 }

@@ -11,6 +11,8 @@ from firebase_admin import auth
 from firebase_admin import exceptions
 
 from flask_socketio import SocketIO
+from apscheduler.schedulers.background import BackgroundScheduler
+
 
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
@@ -43,6 +45,48 @@ def sign_in_with_email_and_password(email: str, password: str, return_secure_tok
         )
 
     return r.json()
+
+def check_time():
+    ref = db.reference("/")
+    users = ref.get()
+
+    ref = db.reference("/push")
+    push_data = ref.get()
+    
+    now_est = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-5)))
+
+    for user in users:
+        if user == "push": continue
+        for task in users[user]:
+            timedue = datetime.datetime.strptime(task['timedue'], "%Y-%m-%d") 
+            delta = timedue - now_est
+            i = 0
+            for reminder in task['reminders']:
+                if f"-0{delta.days}:00:00:00" == reminder['time']:
+                    for push in push_data[user]:          
+                        if reminder['customText'] != "":
+                            text = reminder['customText']
+                        else:
+                            text = task['description']
+
+                        webpush(
+                            subscription_info=push,
+                            data=f"{task['title']} || {delta.days} left! {text}",
+                            vapid_private_key=os.environ['VAPID'],
+                            vapid_claims={
+                                "sub": "mailto:email@example.com"
+                            }
+                        )
+                    
+                    del task['reminders'][i]
+                i += 1
+    
+    ref.set(users)
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=check_time, trigger="interval", seconds=60)
+scheduler.start()
 
 @socketio.on('subscribed')
 def handle_newsub(subscription, user):

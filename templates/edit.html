@@ -36,6 +36,16 @@ src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.0.0/mdb.min.js"
                             <form class="text-center" method="post" action="/edit/{{ task['id'] }}">
                                 <div class="mb-3"><input class="form-control" name="title" placeholder="Title" required="" value="{{ task['title'] }}"></div>
                                 <div class="mb-3"><input class="form-control" name="description" placeholder="Description" value="{{ task['description'] }}"></div><input class="form-control" type="date" name="timedue" min="2022-04-30" max="2023-12-31" required="" value="{{ task['timedue'] }}">
+                                <select class="form-select" name="typeOfTask">
+                                    <option>Task type</option>
+                                    <option value="test" {% if task['typeOfTask'] == "test" %}{{ selected|safe }}{% endif %}>Test or quiz</option>
+                                    <option value="concert" {% if task['typeOfTask'] == "concert" %}{{ selected|safe }}{% endif %}>Concert</option>
+                                    <option value="competition" {% if task['typeOfTask'] == "competition" %}{{ selected|safe }}{% endif %}>Competition</option>
+                                    <option value="game" {% if task['typeOfTask'] == "game" %}{{ selected|safe }}{% endif %}>Game, match</option>
+                                    <option value="instrument" {% if task['typeOfTask'] == "instrument" %}{{ selected|safe }}{% endif %}>Practicing an Instrument</option>
+                                    <option value="sport" {% if task['typeOfTask'] == "sport" %}{{ selected|safe }}{% endif %}>Practicing an Sport</option>
+                                    <option value="other" {% if task['typeOfTask'] == "other" %}{{ selected|safe }}{% endif %}>Other</option>
+                                  </select>
                                 <div class="mb-3"></div><button class="btn btn-primary d-block w-100" type="submit">Edit task</button>
                             </form>
                         </div>

@@ -1,4 +1,4 @@
-import os, datetime, json, time, atexit, pytz
+import os, datetime, json, time, atexit
 from flask import *
 from flask_session import Session
 import requests
@@ -52,47 +52,31 @@ def check_time():
 
     ref = db.reference("/push")
     push_data = ref.get()
-
-
-    ref = db.reference('/')
     
-    now_est = datetime.datetime.now()
-    now_est -= datetime.timedelta(hours=5)
+    now_est = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-5)))
 
     for user in users:
-        print(user)
         if user == "push": continue
         for task in users[user]:
-            print(task['title'])
-            timedue = datetime.datetime.strptime(task['timedue'], "%Y-%m-%d")
-            print(now_est, timedue)
+            timedue = datetime.datetime.strptime(task['timedue'], "%Y-%m-%d") 
             delta = timedue - now_est
             i = 0
-
-            daysBetween = (delta.days*-1) -1
             for reminder in task['reminders']:
-                print(f"-0{daysBetween}:00:00:00", reminder['time'])
-                if f"-0{daysBetween}:00:00:00" == reminder['time']:
-                    for push in push_data[user]: 
-                        print(push)
+                if f"-0{delta.days}:00:00:00" == reminder['time']:
+                    for push in push_data[user]:          
                         if reminder['customText'] != "":
                             text = reminder['customText']
                         else:
                             text = task['description']
 
-                        print(f"{task['title']} || {daysBetween} day(s) left! {text}")
-
-                        try:
-                            webpush(
-                                subscription_info=push,
-                                data=f"{task['title']} || {daysBetween} day(s) left! {text}",
-                                vapid_private_key=os.environ['VAPID'],
-                                vapid_claims={
-                                    "sub": "mailto:email@example.com"
-                                }
-                            )
-                        except Exception as e:
-                            print("ERROR-", e)
+                        webpush(
+                            subscription_info=push,
+                            data=f"{task['title']} || {delta.days} left! {text}",
+                            vapid_private_key=os.environ['VAPID'],
+                            vapid_claims={
+                                "sub": "mailto:email@example.com"
+                            }
+                        )
                     
                     del task['reminders'][i]
                 i += 1
@@ -101,7 +85,7 @@ def check_time():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=check_time, trigger="interval", seconds=5)
+scheduler.add_job(func=check_time, trigger="interval", seconds=60)
 scheduler.start()
 
 @socketio.on('subscribed')
@@ -116,9 +100,8 @@ def handle_newsub(subscription, user):
             userObj = push[user]
         except:
             userObj = []
-
-        if subscription not in userObj:
-            userObj.append(subscription)
+    
+        userObj.append(subscription)
 
         push[user] = userObj
         ref.set(push)
@@ -195,156 +178,186 @@ def add():
         ref = db.reference(session['user'])
         tasks = ref.get()
 
-        
-        title = request.form.get("title")
         reminders = []
 
-        days_7 = ['test', 'quiz', 'concert', 'project']
-        days_3 = ['match', 'game', 'competition', 'contest', 'tournament', 'event']
-        days_2 = ['piano', 'saxophone', 'clarinet', 'violin', 'flute', 'trumpet', 'baritone', 'french horn', 'trombone', 'drum', 'mallet', 'xylophone', 'viola', 'cello', 'orchestra', 'band', 'chorus', 'badminton', 'basketball', 'cricket', 'football', 'rugby', 'tennis', 'volleyball', 'bowling', 'baseball', 'golf', 'hockey', 'soccer', 'swimming', 'table tennis', 'weightlifting', 'boxing', 'gymnastics', 'karate', 'martial arts', 'taekwondo', 'wrestling', 'yoga']
-
-
-        titleWords = title.split(" ")
-        itemType = ""
-
-        matchfor7 = list(set(days_7).intersection(titleWords)) 
-        if matchfor7:
+        if request.form['typeOfTask'] == "test":
             itemType = "7"
-            if matchfor7[0] == "test" or matchfor7[0] == "quiz":
-                reminders.append({
-                    "time": "-07:00:00:00",
-                    "customText": f"Make sure to study for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-06:00:00:00",
-                    "customText": f"Make sure to study for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-05:00:00:00",
-                    "customText": f"Make sure to study for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-04:00:00:00",
-                    "customText": f"Make sure to study for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-03:00:00:00",
-                    "customText": f"Are you sure you're ready for your {matchfor7[0]}?"
-                })
-                reminders.append({
-                    "time": "-02:00:00:00",
-                    "customText": f"Are you sure you're ready for your {matchfor7[0]}?"
-                })
-                reminders.append({
-                    "time": "-01:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-00:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
-            elif matchfor7[0] == "concert":
-                reminders.append({
-                    "time": "-07:00:00:00",
-                    "customText": f"Make sure to practice for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-06:00:00:00",
-                    "customText": f"Make sure to practice for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-05:00:00:00",
-                    "customText": f"Make sure to practice for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-04:00:00:00",
-                    "customText": f"Make sure to practice for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-03:00:00:00",
-                    "customText": f"Are you sure you're ready for your {matchfor7[0]}?"
-                })
-                reminders.append({
-                    "time": "-02:00:00:00",
-                    "customText": f"Are you sure you're ready for your {matchfor7[0]}?"
-                })
-                reminders.append({
-                    "time": "-01:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-00:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
-            else:
-                reminders.append({
-                    "time": "-07:00:00:00",
-                    "customText": f"Make sure to finish for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-06:00:00:00",
-                    "customText": f"Make sure to finish for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-05:00:00:00",
-                    "customText": f"Make sure to finish for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-04:00:00:00",
-                    "customText": f"Make sure to finish for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-03:00:00:00",
-                    "customText": f"Are you sure your {matchfor7[0]} is ready?"
-                })
-                reminders.append({
-                    "time": "-02:00:00:00",
-                    "customText": f"Are you sure your {matchfor7[0]} is ready?"
-                })
-                reminders.append({
-                    "time": "-01:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]} submission!"
-                })
-                reminders.append({
-                    "time": "-00:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
+            reminders.append({
+                "time": "-07:00:00:00",
+                "customText": f"Make sure to study for your test/quiz!"
+            })
+            reminders.append({
+                "time": "-06:00:00:00",
+                "customText": f"Make sure to study for your test/quiz!"
+            })
+            reminders.append({
+                "time": "-05:00:00:00",
+                "customText": f"Make sure to study for your test/quiz!"
+            })
+            reminders.append({
+                "time": "-04:00:00:00",
+                "customText": f"Make sure to study for your test/quiz!"
+            })
+            reminders.append({
+                "time": "-03:00:00:00",
+                "customText": f"Are you sure you're ready for your test/quiz?"
+            })
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"Are you sure you're ready for your test/quiz?"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Good luck with your test/quiz!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your test/quiz!"
+            })
+        
+        if request.form['typeOfTask'] == "concert":
+            itemType = "7"
+            reminders.append({
+                "time": "-07:00:00:00",
+                "customText": f"Make sure to practice for your concert!"
+            })
+            reminders.append({
+                "time": "-06:00:00:00",
+                "customText": f"Make sure to practice for your concert!"
+            })
+            reminders.append({
+                "time": "-05:00:00:00",
+                "customText": f"Make sure to practice for your concert!"
+            })
+            reminders.append({
+                "time": "-04:00:00:00",
+                "customText": f"Make sure to practice for your concert!"
+            })
+            reminders.append({
+                "time": "-03:00:00:00",
+                "customText": f"Are you sure you're ready for your concert?"
+            })
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"Are you sure you're ready for your concert?"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Good luck with your concert!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your concert!"
+            })
 
-        matchfor3 = list(set(days_3).intersection(titleWords)) 
-        if matchfor3:
+        if request.form['typeOfTask'] == "project":
+            itemType = "7"
+            reminders.append({
+                "time": "-07:00:00:00",
+                "customText": f"Make sure to finish your project!"
+            })
+            reminders.append({
+                "time": "-06:00:00:00",
+                "customText": f"Make sure to finish your project!"
+            })
+            reminders.append({
+                "time": "-05:00:00:00",
+                "customText": f"Make sure to finish your project!"
+            })
+            reminders.append({
+                "time": "-04:00:00:00",
+                "customText": f"Make sure to finish your project!"
+            })
+            reminders.append({
+                "time": "-03:00:00:00",
+                "customText": f"Are you sure your project is ready?"
+            })
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"Are you sure your project is ready?"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Good luck with your project submission!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your project submission!"
+            })
+
+        if request.form['typeOfTask'] == "competition":
             itemType = "3"
             reminders.append({
                 "time": "-03:00:00:00",
-                "customText": f"You have a {matchfor3[0]} coming up, make sure to prepare!"
+                "customText": f"You have a competition coming up, make sure to prepare!"
             })
             reminders.append({
                 "time": "-02:00:00:00",
-                "customText": f"You have a {matchfor3[0]} coming up, make sure to prepare!"
+                "customText": f"You have a competition coming up, make sure to prepare!"
             })
             reminders.append({
                 "time": "-01:00:00:00",
-                "customText": f"Good luck with your {matchfor3[0]}!"
+                "customText": f"Good luck with your competition!"
             })
             reminders.append({
                 "time": "-00:00:00:00",
-                "customText": f"Good luck with your {matchfor3[0]}!"
+                "customText": f"Good luck with your competition!"
             })
+            
+        
+        if request.form['typeOfTask'] == "game":
+            itemType = "3"
+            reminders.append({
+                "time": "-03:00:00:00",
+                "customText": f"You have a game coming up, make sure to prepare!"
+            })
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"You have a game coming up, make sure to prepare!"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Good luck with your game!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your game!"
+            })
+            
 
-        matchfor2 = list(set(days_2).intersection(titleWords)) 
-        if matchfor2:
+        if request.form['typeOfTask'] == "instrument":
             itemType = "2"
             reminders.append({
                 "time": "-02:00:00:00",
-                "customText": f"Make sure to practice your {matchfor2[0]}!"
+                "customText": f"Make sure to practice your instrument!"
             })
             reminders.append({
                 "time": "-01:00:00:00",
-                "customText": f"Make sure to practice your {matchfor2[0]}!"
+                "customText": f"Make sure to practice your instrument!"
             })
             reminders.append({
                 "time": "-00:00:00:00",
-                "customText": f"Make sure to practice your {matchfor2[0]}!"
+                "customText": f"Make sure to practice your instrument!"
             })
+            
+        
+        if request.form['typeOfTask'] == "sport":
+            itemType = "2"
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"Make sure to practice your sport!"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Make sure to practice your sport!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Make sure to practice your sport!"
+            })
+
+            
+
         
         if reminders == []:
             itemType = ""
@@ -369,6 +382,7 @@ def add():
             "timedue": request.form.get("timedue"),
             "type": itemType,
             "reminders": reminders,
+            "typeOfTask": request.form.get("typeOfTask"),
         }
 
         if not tasks:
@@ -401,7 +415,8 @@ def edit(id):
             "title": task["title"],
             "description": task["description"],
             "timedue": task["timedue"],
-            "id": id
+            "id": id,
+            "typeOfTask": task["typeOfTask"],
         }
         return render_template("edit.html", task=htmlTask)
 
@@ -409,155 +424,185 @@ def edit(id):
         ref = db.reference(session['user'])
         tasks = ref.get()
         
-        title = request.form.get("title")
         reminders = []
-
-        days_7 = ['test', 'quiz', 'concert', 'project']
-        days_3 = ['match', 'game', 'competition', 'contest', 'tournament', 'event']
-        days_2 = ['piano', 'saxophone', 'clarinet', 'violin', 'flute', 'trumpet', 'baritone', 'french horn', 'trombone', 'drum', 'mallet', 'xylophone', 'viola', 'cello', 'orchestra', 'band', 'chorus', 'badminton', 'basketball', 'cricket', 'football', 'rugby', 'tennis', 'volleyball', 'bowling', 'baseball', 'golf', 'hockey', 'soccer', 'swimming', 'table tennis', 'weightlifting', 'boxing', 'gymnastics', 'karate', 'martial arts', 'taekwondo', 'wrestling', 'yoga']
-
-
-        titleWords = title.split(" ")
-        itemType = ""
-
-        matchfor7 = list(set(days_7).intersection(titleWords)) 
-        if matchfor7:
+        if request.form['typeOfTask'] == "test":
             itemType = "7"
-            if matchfor7[0] == "test" or matchfor7[0] == "quiz":
-                reminders.append({
-                    "time": "-07:00:00:00",
-                    "customText": f"Make sure to study for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-06:00:00:00",
-                    "customText": f"Make sure to study for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-05:00:00:00",
-                    "customText": f"Make sure to study for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-04:00:00:00",
-                    "customText": f"Make sure to study for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-03:00:00:00",
-                    "customText": f"Are you sure you're ready for your {matchfor7[0]}?"
-                })
-                reminders.append({
-                    "time": "-02:00:00:00",
-                    "customText": f"Are you sure you're ready for your {matchfor7[0]}?"
-                })
-                reminders.append({
-                    "time": "-01:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-00:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
-            elif matchfor7[0] == "concert":
-                reminders.append({
-                    "time": "-07:00:00:00",
-                    "customText": f"Make sure to practice for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-06:00:00:00",
-                    "customText": f"Make sure to practice for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-05:00:00:00",
-                    "customText": f"Make sure to practice for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-04:00:00:00",
-                    "customText": f"Make sure to practice for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-03:00:00:00",
-                    "customText": f"Are you sure you're ready for your {matchfor7[0]}?"
-                })
-                reminders.append({
-                    "time": "-02:00:00:00",
-                    "customText": f"Are you sure you're ready for your {matchfor7[0]}?"
-                })
-                reminders.append({
-                    "time": "-01:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-00:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
-            else:
-                reminders.append({
-                    "time": "-07:00:00:00",
-                    "customText": f"Make sure to finish for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-06:00:00:00",
-                    "customText": f"Make sure to finish for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-05:00:00:00",
-                    "customText": f"Make sure to finish for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-04:00:00:00",
-                    "customText": f"Make sure to finish for your {matchfor7[0]}!"
-                })
-                reminders.append({
-                    "time": "-03:00:00:00",
-                    "customText": f"Are you sure your {matchfor7[0]} is ready?"
-                })
-                reminders.append({
-                    "time": "-02:00:00:00",
-                    "customText": f"Are you sure your {matchfor7[0]} is ready?"
-                })
-                reminders.append({
-                    "time": "-01:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]} submission!"
-                })
-                reminders.append({
-                    "time": "-00:00:00:00",
-                    "customText": f"Good luck with your {matchfor7[0]}!"
-                })
+            reminders.append({
+                "time": "-07:00:00:00",
+                "customText": f"Make sure to study for your test/quiz!"
+            })
+            reminders.append({
+                "time": "-06:00:00:00",
+                "customText": f"Make sure to study for your test/quiz!"
+            })
+            reminders.append({
+                "time": "-05:00:00:00",
+                "customText": f"Make sure to study for your test/quiz!"
+            })
+            reminders.append({
+                "time": "-04:00:00:00",
+                "customText": f"Make sure to study for your test/quiz!"
+            })
+            reminders.append({
+                "time": "-03:00:00:00",
+                "customText": f"Are you sure you're ready for your test/quiz?"
+            })
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"Are you sure you're ready for your test/quiz?"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Good luck with your test/quiz!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your test/quiz!"
+            })
+        
+        if request.form['typeOfTask'] == "concert":
+            itemType = "7"
+            reminders.append({
+                "time": "-07:00:00:00",
+                "customText": f"Make sure to practice for your concert!"
+            })
+            reminders.append({
+                "time": "-06:00:00:00",
+                "customText": f"Make sure to practice for your concert!"
+            })
+            reminders.append({
+                "time": "-05:00:00:00",
+                "customText": f"Make sure to practice for your concert!"
+            })
+            reminders.append({
+                "time": "-04:00:00:00",
+                "customText": f"Make sure to practice for your concert!"
+            })
+            reminders.append({
+                "time": "-03:00:00:00",
+                "customText": f"Are you sure you're ready for your concert?"
+            })
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"Are you sure you're ready for your concert?"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Good luck with your concert!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your concert!"
+            })
 
-        matchfor3 = list(set(days_3).intersection(titleWords)) 
-        if matchfor3:
+        if request.form['typeOfTask'] == "project":
+            itemType = "7"
+            reminders.append({
+                "time": "-07:00:00:00",
+                "customText": f"Make sure to finish your project!"
+            })
+            reminders.append({
+                "time": "-06:00:00:00",
+                "customText": f"Make sure to finish your project!"
+            })
+            reminders.append({
+                "time": "-05:00:00:00",
+                "customText": f"Make sure to finish your project!"
+            })
+            reminders.append({
+                "time": "-04:00:00:00",
+                "customText": f"Make sure to finish your project!"
+            })
+            reminders.append({
+                "time": "-03:00:00:00",
+                "customText": f"Are you sure your project is ready?"
+            })
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"Are you sure your project is ready?"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Good luck with your project submission!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your project submission!"
+            })
+
+        if request.form['typeOfTask'] == "competition":
             itemType = "3"
             reminders.append({
                 "time": "-03:00:00:00",
-                "customText": f"You have a {matchfor3[0]} coming up, make sure to prepare!"
+                "customText": f"You have a competition coming up, make sure to prepare!"
             })
             reminders.append({
                 "time": "-02:00:00:00",
-                "customText": f"You have a {matchfor3[0]} coming up, make sure to prepare!"
+                "customText": f"You have a competition coming up, make sure to prepare!"
             })
             reminders.append({
                 "time": "-01:00:00:00",
-                "customText": f"Good luck with your {matchfor3[0]}!"
+                "customText": f"Good luck with your competition!"
             })
             reminders.append({
                 "time": "-00:00:00:00",
-                "customText": f"Good luck with your {matchfor3[0]}!"
+                "customText": f"Good luck with your competition!"
             })
+            
+        
+        if request.form['typeOfTask'] == "game":
+            itemType = "3"
+            reminders.append({
+                "time": "-03:00:00:00",
+                "customText": f"You have a game coming up, make sure to prepare!"
+            })
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"You have a game coming up, make sure to prepare!"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Good luck with your game!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Good luck with your game!"
+            })
+            
 
-        matchfor2 = list(set(days_2).intersection(titleWords)) 
-        if matchfor2:
+        if request.form['typeOfTask'] == "instrument":
             itemType = "2"
             reminders.append({
                 "time": "-02:00:00:00",
-                "customText": f"Make sure to practice your {matchfor2[0]}!"
+                "customText": f"Make sure to practice your instrument!"
             })
             reminders.append({
                 "time": "-01:00:00:00",
-                "customText": f"Make sure to practice your {matchfor2[0]}!"
+                "customText": f"Make sure to practice your instrument!"
             })
             reminders.append({
                 "time": "-00:00:00:00",
-                "customText": f"Make sure to practice your {matchfor2[0]}!"
+                "customText": f"Make sure to practice your instrument!"
             })
+            
+        
+        if request.form['typeOfTask'] == "sport":
+            itemType = "2"
+            reminders.append({
+                "time": "-02:00:00:00",
+                "customText": f"Make sure to practice your sport!"
+            })
+            reminders.append({
+                "time": "-01:00:00:00",
+                "customText": f"Make sure to practice your sport!"
+            })
+            reminders.append({
+                "time": "-00:00:00:00",
+                "customText": f"Make sure to practice your sport!"
+            })
+
+            
+
         
         if reminders == []:
             itemType = ""
@@ -582,6 +627,7 @@ def edit(id):
             "timedue": request.form.get("timedue"),
             "type": itemType,
             "reminders": reminders,
+            "typeOfTask": request.form.get("typeOfTask"),
         }
 
         tasks[id] = task

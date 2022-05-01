@@ -14,6 +14,124 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/4.0.0/mdb.min.js"></script>
 
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script>
+        var socket = io.connect("https://ace.coolcodersj.repl.co");
+
+        let swRegistration = null;
+
+        
+        function urlB64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+        
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+          console.log('Service Worker and Push is supported');
+        
+          navigator.serviceWorker.register('/static/js/sw.js')
+          .then(function(swReg) {
+            console.log('Service Worker is registered', swReg);
+        
+            swRegistration = swReg;
+          })
+          .catch(function(error) {
+            console.error('Service Worker Error', error);
+          });
+        } else {
+          console.warn('Push messaging is not supported');
+        }
+        
+        const applicationServerPublicKey = 'BN3RXACHAhMYyBzUPOfmiXZrNCHDKLVWoMtG8doHfGSiThSpTowRld7H8plPHSWkN2dLNw_nJohZn7a-x60ESqI';
+        
+        function initializeUI() {
+
+             swRegistration.pushManager.getSubscription()
+              .then(function(subscription) {
+                isSubscribed = !(subscription === null);
+                if (!isSubscribed) {
+                  subscribeUser();
+                }
+                });
+        
+          // Set the initial subscription value
+          swRegistration.pushManager.getSubscription()
+          .then(function(subscription) {
+            isSubscribed = !(subscription === null);
+        
+            updateSubscriptionOnServer(subscription);
+        
+            if (isSubscribed) {
+              console.log('User IS subscribed.');
+            } else {
+              console.log('User is NOT subscribed.');
+            }
+        
+          });
+        }
+        
+        function subscribeUser() {
+          const applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
+          swRegistration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey
+          })
+          .then(function(subscription) {
+            console.log('User is subscribed.');
+        
+            updateSubscriptionOnServer(subscription);
+        
+            isSubscribed = true;
+                  })
+          .catch(function(err) {
+            console.log('Failed to subscribe the user: ', err);
+          });
+        }
+            
+        navigator.serviceWorker.register('/static/js/sw.js')
+        .then(function(swReg) {
+          console.log('Service Worker is registered', swReg);
+          swRegistration = swReg;
+        
+          initializeUI();
+        })
+        
+        const applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
+        swRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey
+        })
+        
+        
+        swRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey
+        })
+        .then(function(subscription) {
+          console.log('User is subscribed.');
+        
+          updateSubscriptionOnServer(subscription);
+        
+          isSubscribed = true;
+        })
+        .catch(function(err) {
+          console.log('Failed to subscribe the user: ', err);
+        });
+        
+        function updateSubscriptionOnServer(subscription) {
+          socket.emit("subscribed", subscription, "{{userId}}")
+        }
+    </script>
 
 </head>
 

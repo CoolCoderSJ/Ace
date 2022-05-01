@@ -1,7 +1,8 @@
-import os, datetime, json
+import os, datetime, json, time, atexit
 from flask import *
 from flask_session import Session
 import requests
+from pywebpush import webpush
 
 import firebase_admin
 from firebase_admin import db
@@ -9,6 +10,7 @@ from firebase_admin import credentials
 from firebase_admin import auth
 from firebase_admin import exceptions
 
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
@@ -16,6 +18,9 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 app.secret_key = r's\xb6%\x99\x8d2\n\x84=Y5H\x0c\'^\xfb>\x86\xa4\xbe"\n\xf9r'
+
+socketio = SocketIO(app)
+
 
 cred_obj = credentials.Certificate("firebase_cred.json")
 fire = firebase_admin.initialize_app(cred_obj, {
@@ -39,6 +44,24 @@ def sign_in_with_email_and_password(email: str, password: str, return_secure_tok
 
     return r.json()
 
+@socketio.on('subscribed')
+def handle_newsub(subscription, user):
+    if subscription:
+        ref = db.reference("/push")
+        push = ref.get()
+        if not push:
+            push = {}
+    
+        try:
+            userObj = push[user]
+        except:
+            userObj = []
+    
+        userObj.append(subscription)
+
+        push[user] = userObj
+        ref.set(push)
+    
 @app.route("/")
 def index():
     if not "user" in session.keys():
@@ -74,7 +97,7 @@ def index():
             i += 1
 
     
-    return render_template("index.html", tasks=htmlTasks)
+    return render_template("index.html", tasks=htmlTasks, userId=session['user'])
 
 @app.route("/complete/<id>", methods=['POST'])
 def complete(id):
@@ -540,4 +563,4 @@ def login():
             
         
 
-app.run(host='0.0.0.0', port=8080)
+socketio.run(app, host='0.0.0.0', port=8080)
